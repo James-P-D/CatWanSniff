@@ -1,5 +1,6 @@
+#-c COM6 -freq "867.00-869.00" -step 0.1 -chan "0-63" -bw "5,6,7,8" -sf "6,7,8,9,10,11,12" -cr "5,8" -t 30 -v -uc
+
 import argparse
-from argparse import ArgumentParser
 import serial #pip install pyserial
 import time
 from itertools import product
@@ -45,7 +46,16 @@ def send_and_receive(ser, to_send, verbose, use_color):
 
 
 def main(com_port, frequencies, channels, bandwidths, spread_factors, coding_rates, timeout, verbose, use_color):
-    print(com_port, frequencies, channels, bandwidths, spread_factors, coding_rates, timeout, verbose, use_color)
+    if verbose:
+        print(f"COM port: {com_port}")
+        print(f"Freq: {frequencies}")
+        print(f"Channel: {channels}")
+        print(f"Bandwidth: {bandwidths}")
+        print(f"Spread factor: {spread_factors}")
+        print(f"Coding rate: {coding_rates}")
+        print(f"Timeout: {timeout}")
+        print(f"Verbose: {verbose}")
+        print(f"Use color: {use_color}")
     baud_rate = 9600
     try:
         with serial.Serial(com_port, baud_rate, timeout=1) as ser:
@@ -78,6 +88,11 @@ def main(com_port, frequencies, channels, bandwidths, spread_factors, coding_rat
                         state += f"cr {coding_rate}"
 
                     print_color(f"{state}", f"{ConsoleColors.GREEN}", use_color)
+                    # TODO REMOVE ME send_and_receive(ser, f"get_config", verbose, use_color)
+                    # TODO REMOVE ME send_and_receive(ser, f"get_freq", verbose, use_color)
+
+
+                    # TODO REMOVE ME input()
 
                     old_time = time.time()
                     while time.time() - old_time < timeout:
@@ -102,20 +117,24 @@ def main(com_port, frequencies, channels, bandwidths, spread_factors, coding_rat
         print_color(f"Serial reading stopped", f"{ConsoleColors.RED}", use_color)
 
 
-def parse_freq(f, s):
+def parse_float_range(f, s, min_val, max_val, name):
     if f is None:
         return f
 
     if "," in f:
-        return args.freq.split(",")
+        return f.split(",")
     elif "-" in f:
         tokens = f.split("-")
         if len(tokens) != 2:
-            raise ValueError(f"{f} does not appear to be a valid range")
+            raise ValueError(f"{name} {f} does not appear to be a valid range")
         try:
             start = float(tokens[0])
             end = float(tokens[1])
             step = float(s)
+
+            if (start < min_val) or (end > max_val) or (step <= 0):
+                raise ValueError(f"{name}={f}, step={s} does not appear to be valid, or within range of {min_val} "
+                                 f"to {max_val}")
 
             result = [f"{start}"]
             while start <= end:
@@ -124,26 +143,28 @@ def parse_freq(f, s):
             return result
 
         except Exception as e:
-            raise ValueError(f"freq={f}, step={s} does not appear to be valid")
+            raise ValueError(f"{name}={f}, step={s} does not appear to be valid")
     else:
-        return f
+        return [f]
 
 
-def parse_chan(c):
-    if c is None:
-        return c
+def parse_int_range(n, min_val, max_val, name):
+    if n is None:
+        return n
 
-    if "," in c:
-        return args.freq.split(",")
-    elif "-" in c:
-        tokens = c.split("-")
+    if "," in n:
+        return n.split(",")
+    elif "-" in n:
+        tokens = n.split("-")
         if len(tokens) != 2:
-            raise ValueError(f"{c} does not appear to be a valid range")
+            raise ValueError(f"{name}={n} does not appear to be a valid range")
         try:
             start = int(tokens[0])
             end = int(tokens[1])
             step = 1
-
+            if (start < min_val) or (end > max_val) or (step <= 0):
+                raise ValueError(f"{name}={n} does not appear to be valid, or within range of {min_val} "
+                                 f"to {max_val}")
             result = [f"{start}"]
             while start < end:
                 start += step
@@ -151,9 +172,9 @@ def parse_chan(c):
             return result
 
         except Exception as e:
-            raise ValueError(f"freq={f} does not appear to be valid")
+            raise ValueError(f"{name}={n} does not appear to be valid")
     else:
-        return c
+        return [n]
 
 
 if __name__ == "__main__":
@@ -176,7 +197,7 @@ if __name__ == "__main__":
     parser.add_argument("-chan",
                         metavar="Channel",
                         type=str,
-                        help="LoRa channel (0-63) ('0,1,2)' or '0-63'")
+                        help="LoRa channel (0-63) ('0,1,2' or '0-63')")
     parser.add_argument("-bw",
                         metavar="Bandwidth",
                         type=str,
@@ -215,11 +236,11 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     try:
-        freq = parse_freq(args.freq, args.step)
-        chan = parse_chan(args.chan)
-        bw = args.bw.split(",")
-        sf = args.sf.split(",")
-        cr = args.cr.split(",")
+        freq = parse_float_range(args.freq, args.step, 867.0, 869.0, "freq")
+        chan = parse_int_range(args.chan, 0, 63, "chan")
+        bw = parse_int_range(args.bw, 0, 8, "bw")
+        sf = parse_int_range(args.sf, 6, 12, "sf")
+        cr = parse_int_range(args.cr, 4, 8, "sf")
         main(args.c,
              freq if True else [None],
              chan if True else [None],
