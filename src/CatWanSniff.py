@@ -1,4 +1,6 @@
-#-c COM6 -freq "867.00-869.00" -step 0.1 -chan "0-63" -bw "5,6,7,8" -sf "6,7,8,9,10,11,12" -cr "5,8" -t 30 -v -uc
+#-c COM11 -freq "867.00-869.00" -step 0.1 -chan "0-63" -bw "5,6,7,8" -sf "6,7,8,9,10,11,12" -t 10 -v -uc
+
+#-c COM11 -freq "866.89" -chan "0-63" -bw "5,6,7,8" -sf "6,7,8,9,10,11,12" -t 10
 
 import argparse
 import serial #pip install pyserial
@@ -65,6 +67,7 @@ def main(com_port, frequencies, channels, bandwidths, spread_factors, coding_rat
                 data = ser.readline().decode('utf-8').strip()
                 if data and verbose:
                     print_color(f"{data}", f"{ConsoleColors.BLUE}", use_color)
+            send_and_receive(ser,f"help", verbose,use_color)
             send_and_receive(ser, f"get_config", verbose, use_color)
 
             while True:
@@ -240,13 +243,11 @@ if __name__ == "__main__":
         chan = parse_int_range(args.chan, 0, 63, "chan")
         bw = parse_int_range(args.bw, 0, 8, "bw")
         sf = parse_int_range(args.sf, 6, 12, "sf")
-        cr = parse_int_range(args.cr, 4, 8, "sf")
         main(args.c,
              freq if True else [None],
              chan if True else [None],
              bw if True else [None],
              sf if True else [None],
-             cr if True else [None],
              args.t,
              args.v,
              args.uc)
