@@ -47,7 +47,8 @@ def send_and_receive(ser, to_send, verbose, use_color):
             print_color(f"{data}", f"{ConsoleColors.BLUE}", use_color)
 
 
-def main(com_port, frequencies, channels, bandwidths, spread_factors, coding_rates, timeout, verbose, use_color):
+def main(com_port, frequencies, channels, bandwidths, spread_factors, coding_rates, preamble_lengths, sync_words,
+         timeout, verbose, use_color):
     if verbose:
         print(f"COM port: {com_port}")
         print(f"Freq: {frequencies}")
@@ -55,6 +56,8 @@ def main(com_port, frequencies, channels, bandwidths, spread_factors, coding_rat
         print(f"Bandwidth: {bandwidths}")
         print(f"Spread factor: {spread_factors}")
         print(f"Coding rate: {coding_rates}")
+        print(f"Preamble lengths: {preamble_lengths}")
+        print(f"Sync words: {sync_words}")
         print(f"Timeout: {timeout}")
         print(f"Verbose: {verbose}")
         print(f"Use color: {use_color}")
@@ -67,12 +70,13 @@ def main(com_port, frequencies, channels, bandwidths, spread_factors, coding_rat
                 data = ser.readline().decode('utf-8').strip()
                 if data and verbose:
                     print_color(f"{data}", f"{ConsoleColors.BLUE}", use_color)
-            send_and_receive(ser,f"help", verbose,use_color)
+            send_and_receive(ser, f"help", verbose,use_color)
             send_and_receive(ser, f"get_config", verbose, use_color)
 
             while True:
-                for item in list(product(frequencies, channels, bandwidths, spread_factors, coding_rates)):
-                    (frequency, channel, bandwidth, spread_factor, coding_rate) = item
+                for item in list(product(frequencies, channels, bandwidths, spread_factors, coding_rates,
+                                         preamble_lengths, sync_words)):
+                    (frequency, channel, bandwidth, spread_factor, coding_rate, preamble_length, sync_word) = item
                     state = ""
                     if frequency:
                         send_and_receive(ser, f"set_freq {frequency}", verbose, use_color)
@@ -88,7 +92,13 @@ def main(com_port, frequencies, channels, bandwidths, spread_factors, coding_rat
                         state += f"sf {spread_factor}, "
                     if coding_rate:
                         send_and_receive(ser, f"set_cr {coding_rate}", verbose, use_color)
-                        state += f"cr {coding_rate}"
+                        state += f"cr {coding_rate}, "
+                    if preamble_length:
+                        send_and_receive(ser, f"set_pl {preamble_length}", verbose, use_color)
+                        state += f"pl {preamble_length}, "
+                    if sync_word:
+                        send_and_receive(ser, f"set_sw {sync_word}", verbose, use_color)
+                        state += f"sw 0x{sync_word}"
 
                     print_color(f"{state}", f"{ConsoleColors.GREEN}", use_color)
                     # TODO REMOVE ME send_and_receive(ser, f"get_config", verbose, use_color)
@@ -100,6 +110,7 @@ def main(com_port, frequencies, channels, bandwidths, spread_factors, coding_rat
                     old_time = time.time()
                     while time.time() - old_time < timeout:
                         if ser.in_waiting > 0:
+                            print_color("RECEIVED DATA!", f"{ConsoleColors.RED}", use_color)
                             data = ser.readline()
                             size = 16
                             index = 0
@@ -122,7 +133,7 @@ def main(com_port, frequencies, channels, bandwidths, spread_factors, coding_rat
 
 def parse_float_range(f, s, min_val, max_val, name):
     if f is None:
-        return f
+        return [None]
 
     if "," in f:
         return f.split(",")
@@ -153,7 +164,7 @@ def parse_float_range(f, s, min_val, max_val, name):
 
 def parse_int_range(n, min_val, max_val, name):
     if n is None:
-        return n
+        return [None]
 
     if "," in n:
         return n.split(",")
@@ -180,6 +191,35 @@ def parse_int_range(n, min_val, max_val, name):
         return [n]
 
 
+def parse_hex_range(n, min_val, max_val, name):
+    if n is None:
+        return [None]
+
+    if "," in n:
+        return n.split(",")
+    elif "-" in n:
+        tokens = n.split("-")
+        if len(tokens) != 2:
+            raise ValueError(f"{name}={n} does not appear to be a valid range")
+        try:
+            start = int(tokens[0], 16)
+            end = int(tokens[1], 16)
+            step = 1
+            if (start < min_val) or (end > max_val) or (step <= 0):
+                raise ValueError(f"{name}={n} does not appear to be valid, or within range of {min_val} "
+                                 f"to {max_val}")
+            result = [f"{start:02X}"]
+            while start < end:
+                start += step
+                result.append(f"{start:02X}")
+            return result
+
+        except Exception as e:
+            raise ValueError(f"{name}={n} does not appear to be valid")
+    else:
+        return [n]
+
+
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="CatWan LoRa Scanner", formatter_class=SmartFormatter)
     parser.add_argument("-c",
@@ -191,7 +231,7 @@ if __name__ == "__main__":
     parser.add_argument("-freq",
                         metavar="Frequencies",
                         type=str,
-                        help="LoRa frequency ('868.1,868.2,868.3' or '867-869' (use -step for range interval))")
+                        help="LoRa frequency (e.g. '868.1,868.2,868.3' or '867-869' (use -step for range interval))")
     parser.add_argument("-step",
                         metavar="Interval",
                         type=str,
@@ -200,7 +240,7 @@ if __name__ == "__main__":
     parser.add_argument("-chan",
                         metavar="Channel",
                         type=str,
-                        help="LoRa channel (0-63) ('0,1,2' or '0-63')")
+                        help="Lora channel 0-63 (e.g. '0,1,2' or '0-63')")
     parser.add_argument("-bw",
                         metavar="Bandwidth",
                         type=str,
@@ -216,14 +256,23 @@ if __name__ == "__main__":
     parser.add_argument("-sf",
                         metavar="Spread factor",
                         type=str,
-                        help="6-12")
+                        help="Spread factor 6-12 (e.g. '6,7,8' or '6-12')")
     parser.add_argument("-cr",
                         metavar="Coding rate",
                         type=str,
                         help="R|5 - 4/5 (1.25x overhead)\n"
                              "6 - 4/6 (1.5x overhead)\n"
                              "7 - 4/7 (1.75x overhead)\n"
-                             "8 - 4/8 (2x overhead)")
+                             "8 - 4/8 (2x overhead)\n"
+                             "(e.g. '5,6' or '5-8)")
+    parser.add_argument("-pl",
+                        metavar="Preamble length",
+                        type=str,
+                        help="Spread factor 6-65535 (e.g. '6,10,12' or '6-65535')")
+    parser.add_argument("-sw",
+                        metavar="Sync word",
+                        type=str,
+                        help="Sync word byte (e.g. '00,12,FF' or '0-FF')")
     parser.add_argument('-t',
                         metavar="Timeout",
                         default=10,
@@ -243,11 +292,17 @@ if __name__ == "__main__":
         chan = parse_int_range(args.chan, 0, 63, "chan")
         bw = parse_int_range(args.bw, 0, 8, "bw")
         sf = parse_int_range(args.sf, 6, 12, "sf")
+        cr = parse_int_range(args.cr, 5, 8, "cr")
+        pl = parse_int_range(args.pl, 6, 65536, "pl")
+        sw = parse_hex_range(args.sw, 0x00, 0xFF, "sw")
         main(args.c,
              freq if True else [None],
              chan if True else [None],
              bw if True else [None],
              sf if True else [None],
+             cr if True else [None],
+             pl if True else [None],
+             sw if True else [None],
              args.t,
              args.v,
              args.uc)
