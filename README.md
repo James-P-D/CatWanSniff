@@ -1,7 +1,7 @@
 # CatWanSniff
 LoRa packet sniffer for the Electronic Cats CatWan device in Python (Currently not working)
 
-![Screenshot](https://github.com/James-P-D/CanWanSniff/blob/main/screenshot.png)
+![Screenshot](https://github.com/James-P-D/CatWanSniff/blob/main/screenshot.png)
 
 ## Introduction
 
