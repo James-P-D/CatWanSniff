@@ -1,9 +1,5 @@
-#-c COM11 -freq "867.00-869.00" -step 0.1 -chan "0-63" -bw "5,6,7,8" -sf "6,7,8,9,10,11,12" -t 10 -v -uc
-
-#-c COM11 -freq "866.89" -chan "0-63" -bw "5,6,7,8" -sf "6,7,8,9,10,11,12" -t 10
-
 import argparse
-import serial #pip install pyserial
+import serial
 import time
 from itertools import product
 import sys
@@ -101,11 +97,6 @@ def main(com_port, frequencies, channels, bandwidths, spread_factors, coding_rat
                         state += f"sw 0x{sync_word}"
 
                     print_color(f"{state}", f"{ConsoleColors.GREEN}", use_color)
-                    # TODO REMOVE ME send_and_receive(ser, f"get_config", verbose, use_color)
-                    # TODO REMOVE ME send_and_receive(ser, f"get_freq", verbose, use_color)
-
-
-                    # TODO REMOVE ME input()
 
                     old_time = time.time()
                     while time.time() - old_time < timeout:
