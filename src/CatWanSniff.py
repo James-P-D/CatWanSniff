@@ -244,7 +244,8 @@ if __name__ == "__main__":
     parser.add_argument("-bw",
                         metavar="Bandwidth",
                         type=str,
-                        help="R|0 - 7.8 kHz\n"
+                        help="R|Bandwidth 0-8 (e.g. '0,2,4' or '0-8')\n"
+                             "0 - 7.8 kHz\n"
                              "1 - 10.4 kHz\n"
                              "2 - 15.6 kHz\n"
                              "3 - 20.8 kHz\n"
@@ -260,15 +261,15 @@ if __name__ == "__main__":
     parser.add_argument("-cr",
                         metavar="Coding rate",
                         type=str,
-                        help="R|5 - 4/5 (1.25x overhead)\n"
+                        help="R|Coding rate 5-8 (e.g. '5,6' or '5-8)\n"
+                             "5 - 4/5 (1.25x overhead)\n"
                              "6 - 4/6 (1.5x overhead)\n"
                              "7 - 4/7 (1.75x overhead)\n"
-                             "8 - 4/8 (2x overhead)\n"
-                             "(e.g. '5,6' or '5-8)")
+                             "8 - 4/8 (2x overhead)")
     parser.add_argument("-pl",
                         metavar="Preamble length",
                         type=str,
-                        help="Spread factor 6-65535 (e.g. '6,10,12' or '6-65535')")
+                        help="Preamble length 6-65535 (e.g. '6,10,12' or '6-65535')")
     parser.add_argument("-sw",
                         metavar="Sync word",
                         type=str,
