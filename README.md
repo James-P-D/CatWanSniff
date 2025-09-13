@@ -9,6 +9,13 @@ I purchased a [CatWAN USB Stick from Electronic Cats](https://electroniccats.com
 
 If anyone can see what the issue is, I'd be interested to hear.
 
+## Requirements
+
+```
+pip install argparse
+pip install pyserial
+```
+
 ## Usage
 
 The project requires `argparse` and `pyserial` so you'll need to run:
