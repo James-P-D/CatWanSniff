@@ -5,7 +5,7 @@ LoRa packet sniffer for the Electronic Cats CatWan device in Python (Currently n
 
 ## Introduction
 
-I purchased a [CatWAN USB Stick from Electronic Cats](https://electroniccats.com/store/catwan-usb-stick/) in the hope that it might be possible to make a general-purpose LoRa scanner, and be able to specify a frequency range, and other paramaters, and then have the device 'sweep' for any LoRa packets. I've tried leaving the device on and sweeping around the 868MHz range, with varying values for the other parameters in the hope that I might be able to sniff some traffic from the various LoRa devices I can see on my SDR. Sadly, so far no luck.
+I purchased a [CatWAN USB Stick](https://electroniccats.com/store/catwan-usb-stick/) from @ElectronicCats in the hope that it might be possible to make a general-purpose LoRa scanner and be able to specify a frequency range and other paramaters, and then have the device sweep for any LoRa packets. I've tried leaving the device on and sweeping around the 868MHz range, with varying values for the other parameters in the hope that I might be able to sniff some traffic from the various LoRa devices I can see on my SDR. Sadly, so far no luck.
 
 If anyone can see what the issue is, I'd be interested to hear.
 
