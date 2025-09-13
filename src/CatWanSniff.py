@@ -289,7 +289,7 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     try:
-        freq = parse_float_range(args.freq, args.step, 867.0, 869.0, "freq")
+        freq = parse_float_range(args.freq, args.step, 0.0, 1000.0, "freq")
         chan = parse_int_range(args.chan, 0, 63, "chan")
         bw = parse_int_range(args.bw, 0, 8, "bw")
         sf = parse_int_range(args.sf, 6, 12, "sf")
